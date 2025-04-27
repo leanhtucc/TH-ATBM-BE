@@ -1,0 +1,91 @@
+### Biến môi trường
+@baseUrl = http://localhost:3456/api
+@accessToken = YOUR_ACCESS_TOKEN_HERE
+@refreshToken = YOUR_REFRESH_TOKEN_HERE
+
+### 1. Đăng ký tài khoản mới
+# Lưu ý: đổi email mỗi lần test để tránh lỗi trùng lặp
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "user123@example.com",
+  "password": "StrongPass123!",
+  "enable2FA": false
+}
+
+### 2. Đăng nhập
+# Sau khi đăng nhập thành công, sao chép accessToken và refreshToken từ response
+# và cập nhật các biến @accessToken và @refreshToken ở trên
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "user123@example.com",
+  "password": "StrongPass123!"
+}
+
+### 3. Xác thực 2FA
+# Khi bạn nhận được phản hồi yêu cầu xác thực 2 bước,
+# hãy sử dụng request này với userId và mã 2FA từ ứng dụng Google Authenticator
+POST {{baseUrl}}/auth/verify-2fa
+Content-Type: application/json
+
+{
+  "userId": "YOUR_USER_ID_HERE",  # Thay thế bằng ID người dùng của bạn
+  "twoFACode": "123456"           # Thay thế bằng mã 6 số từ Google Authenticator
+}
+
+### 4. Làm mới token khi access token hết hạn
+# Sử dụng refreshToken để lấy cặp token mới
+POST {{baseUrl}}/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+### 5. Cập nhật thiết lập 2FA (yêu cầu accessToken)
+PUT {{baseUrl}}/auth/2fa-settings
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "enable2FA": true
+}
+
+### 6. Lấy tất cả mật khẩu đã lưu (yêu cầu accessToken)
+GET {{baseUrl}}/passwords
+Authorization: Bearer {{accessToken}}
+
+### 7. Lấy mật khẩu theo ID (yêu cầu accessToken)
+GET {{baseUrl}}/passwords/password_id_here
+Authorization: Bearer {{accessToken}}
+
+### 8. Thêm mật khẩu mới (yêu cầu accessToken)
+POST {{baseUrl}}/passwords
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "website": "facebook.com",
+  "username": "user@example.com",
+  "encryptedData": "encrypted_password_here",
+  "iv": "initialization_vector_here"
+}
+
+### 9. Cập nhật mật khẩu (yêu cầu accessToken)
+PUT {{baseUrl}}/passwords/password_id_here
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "website": "facebook.com",
+  "username": "updated_user@example.com",
+  "encryptedData": "new_encrypted_password_here",
+  "iv": "new_initialization_vector_here"
+}
+
+### 10. Xóa mật khẩu (yêu cầu accessToken)
+DELETE {{baseUrl}}/passwords/password_id_here
+Authorization: Bearer {{accessToken}}
