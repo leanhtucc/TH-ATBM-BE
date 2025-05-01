@@ -28,7 +28,7 @@ function encryptPassword(password, secretKey) {
 }
 
 // Mã hóa một mật khẩu cụ thể (thay đổi giá trị này theo nhu cầu của bạn)
-const password = 'Anht080896'
+const password = 'MyPassword123'
 const secretKey = 'ThisIsASecretKey123' // Khóa bí mật (trong thực tế là của người dùng)
 
 const result = encryptPassword(password, secretKey)
@@ -41,6 +41,7 @@ console.log('\n=== JSON OBJECT CHO API REQUEST ===')
 console.log(
   JSON.stringify(
     {
+      website: 'facebook.com', // Thêm trường website
       username: 'test@example.com',
       encryptedData: result.encryptedData,
       iv: result.iv

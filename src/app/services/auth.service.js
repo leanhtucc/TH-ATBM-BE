@@ -3,12 +3,7 @@ import bcrypt from 'bcrypt'
 import speakeasy from 'speakeasy'
 import QRCode from 'qrcode'
 import User from '../../models/client/user'
-import {
-  TOKEN_TYPE,
-  ACCESS_TOKEN_EXPIRE_IN,
-  REFRESH_TOKEN_EXPIRE_IN,
-  LOGIN_EXPIRE_IN
-} from '../../configs/constants'
+import { TOKEN_TYPE, ACCESS_TOKEN_EXPIRE_IN, REFRESH_TOKEN_EXPIRE_IN } from '../../configs/constants'
 import { generateToken, verifyToken } from '../../utils/helpers/token.helper'
 
 // Helper function to hash passwords using bcrypt
@@ -25,7 +20,7 @@ const verifyPassword = async (plainPassword, hashedPassword) => {
 // Register a new user
 export const register = async (userData) => {
   try {
-    const { email, password, enable2FA } = userData
+    const { name, email, password, enable2FA } = userData
 
     // Kiểm tra và chuyển đổi enable2FA thành boolean
     const enable2FABoolean =
@@ -33,6 +28,7 @@ export const register = async (userData) => {
 
     // Thêm log để kiểm tra dữ liệu đầu vào
     console.log('Registration userData:', {
+      name,
       email,
       enable2FA_original: enable2FA,
       enable2FA_type: typeof enable2FA,
@@ -50,6 +46,7 @@ export const register = async (userData) => {
 
     // Create new user object
     const newUser = new User({
+      name,
       email,
       passwordHash
     })
@@ -60,10 +57,15 @@ export const register = async (userData) => {
       console.log('Enabling 2FA for user:', email)
       try {
         const secret = speakeasy.generateSecret({
-          name: `Password Manager:${email}`
+          name: `Password Manager:${email}`,
+          length: 20, // Độ dài chuẩn (160 bits)
+          issuer: 'Password Manager'
         })
 
-        console.log('Generated secret:', secret)
+        console.log('Generated secret:', {
+          base32: secret.base32,
+          length: secret.base32.length
+        })
 
         // Save the secret to the user
         newUser.twoFASecret = secret.base32
@@ -87,6 +89,7 @@ export const register = async (userData) => {
     console.log(
       'About to save user:',
       JSON.stringify({
+        name: newUser.name,
         email: newUser.email,
         hasPasswordHash: !!newUser.passwordHash,
         has2FA: !!newUser.twoFASecret
@@ -225,30 +228,101 @@ export const refreshAccessToken = async (oldRefreshToken) => {
   }
 }
 
-export const verify2FA = async (userId, token) => {
-  const user = await User.findById(userId)
-  if (!user || !user.twoFASecret) {
-    throw new Error('Người dùng không tồn tại hoặc không có thiết lập 2FA')
-  }
+export const verify2FA = async (userId, twoFACode) => {
+  try {
+    // Log để debug
+    console.log(`Đang xác thực 2FA cho user: ${userId}, mã: ${twoFACode}`)
 
-  const verified = speakeasy.totp.verify({
-    secret: user.twoFASecret,
-    encoding: 'base32',
-    token: token
-  })
+    const user = await User.findById(userId)
 
-  if (!verified) {
-    throw new Error('Mã xác thực 2FA không hợp lệ')
-  }
+    if (!user) {
+      console.log('Không tìm thấy người dùng')
+      throw new Error('Không tìm thấy người dùng')
+    }
 
-  const authToken = generateToken({ user_id: user._id }, TOKEN_TYPE.AUTHORIZATION, LOGIN_EXPIRE_IN)
+    if (!user.twoFASecret) {
+      console.log('Người dùng chưa thiết lập 2FA')
+      throw new Error('Người dùng chưa thiết lập 2FA')
+    }
 
-  return {
-    user,
-    token: authToken
+    // Đảm bảo mã 2FA là chuỗi và loại bỏ khoảng trắng
+    const cleanCode = String(twoFACode).trim()
+
+    // Log để debug
+    console.log(`Secret: ${user.twoFASecret}, Code: ${cleanCode}`)
+
+    // Thử nhiều phương pháp xác thực khác nhau
+    let verified = false
+
+    // Phương pháp 1: Với cửa sổ thời gian lớn
+    verified = speakeasy.totp.verify({
+      secret: user.twoFASecret,
+      encoding: 'base32',
+      token: cleanCode,
+      window: 6 // Cho phép sai lệch 3 khoảng thời gian trước và sau
+    })
+    console.log(`Kết quả xác thực (window=6): ${verified}`)
+
+    // Phương pháp 2: Với thuật toán cụ thể
+    if (!verified) {
+      verified = speakeasy.totp.verify({
+        secret: user.twoFASecret,
+        encoding: 'base32',
+        token: cleanCode,
+        window: 4,
+        algorithm: 'sha1'
+      })
+      console.log(`Kết quả xác thực (algorithm=sha1): ${verified}`)
+    }
+
+    // Phương pháp 3: Với cấu hình cơ bản
+    if (!verified) {
+      verified = speakeasy.totp.verify({
+        secret: user.twoFASecret,
+        encoding: 'base32',
+        token: cleanCode
+      })
+      console.log(`Kết quả xác thực (cấu hình cơ bản): ${verified}`)
+    }
+
+    // HACK: Cho phép mã đặc biệt trong môi trường phát triển
+    if (process.env.NODE_ENV === 'development' && cleanCode === '000000') {
+      console.log('Sử dụng mã master cho môi trường dev')
+      verified = true
+    }
+
+    // Nếu tất cả phương pháp đều thất bại
+    if (!verified) {
+      throw new Error('Mã xác thực 2FA không hợp lệ')
+    }
+
+    // Nếu xác thực thành công, tạo token và trả về
+    const accessToken = generateToken(
+      { user_id: user._id },
+      TOKEN_TYPE.ACCESS_TOKEN,
+      ACCESS_TOKEN_EXPIRE_IN
+    )
+
+    const refreshToken = generateToken(
+      { user_id: user._id },
+      TOKEN_TYPE.REFRESH_TOKEN,
+      REFRESH_TOKEN_EXPIRE_IN
+    )
+
+    // Lưu refresh token
+    user.refreshToken = refreshToken
+    await user.save()
+
+    const tokens = { accessToken, refreshToken }
+    return {
+      user,
+      ...tokens
+    }
+  } catch (error) {
+    console.error('Lỗi xác thực 2FA:', error.message)
+    throw error
   }
 }
-
 export const update2FASettings = async (userId, enable2FA) => {
   const user = await User.findById(userId)
   if (!user) {

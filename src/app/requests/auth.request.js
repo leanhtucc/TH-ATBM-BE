@@ -1,6 +1,10 @@
 import Joi from 'joi'
 
 export const registerSchema = Joi.object({
+  name: Joi.string().required().messages({
+    'string.empty': 'Tên không được bỏ trống',
+    'any.required': 'Tên là bắt buộc'
+  }),
   email: Joi.string().email().required().messages({
     'string.email': 'Email không hợp lệ',
     'any.required': 'Email là bắt buộc'

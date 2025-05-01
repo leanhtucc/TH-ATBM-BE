@@ -1,103 +1,154 @@
-# Base ExpressJS
+# Password Manager API
 
-Base Express JS is a foundational application for constructing RESTful APIs with Node.js.
+## Cách kiểm tra và sửa lỗi 2FA
 
-## Requirements
+### 1. Reset 2FA (Trong môi trường phát triển)
 
-- node >= 20
+```http
+POST http://localhost:3456/api/auth/reset-2fa
+Content-Type: application/json
 
-## Usage
-
-1. Clone project
-2. Create `.env` file, copy content from [.env.example](./.env.example) to `.env` file and config in `.env`:
-
-- Config Runtime Environment
-
-```bash
-HOST=localhost
-PORT=3456
+{
+  "userId": "YOUR_USER_ID"
+}
 ```
 
-- Config Project
+### 2. Debug 2FA
 
-```bash
-APP_NAME=Express App
-# server domain name
-APP_URL_API=http://localhost:3456
-# primary client domain name
-APP_URL_CLIENT=http://localhost:3000
-# other client domain name
-# Eg: ["http://localhost:3001", "http://localhost:3002"]
-OTHER_URLS_CLIENT=
-# primary secret key
-SECRET_KEY=
-# expressed in seconds or a string describing a time span
-# Eg: 60, 2 days, 10h, 7d
-LOGIN_EXPIRE_IN=7d
-# maximum number of requests per minute
-REQUESTS_LIMIT_PER_MINUTE=100
+```http
+POST http://localhost:3456/api/auth/debug-2fa
+Content-Type: application/json
+
+{
+  "secret": "YOUR_SECRET",
+  "code": "CODE_FROM_AUTHENTICATOR"
+}
 ```
 
-- Config MongoDb Database
+### 3. Sử dụng mã master (Trong môi trường phát triển)
 
-```bash
-DB_HOST=localhost
-DB_PORT=27017
-DB_USERNAME=
-DB_PASSWORD=
-DB_NAME=
-DB_AUTH_SOURCE=admin
+```http
+POST http://localhost:3456/api/auth/verify-2fa
+Content-Type: application/json
+
+{
+  "userId": "YOUR_USER_ID",
+  "twoFACode": "000000"
+}
 ```
 
-- Config Email
+### 4. Thiết lập lại 2FA
 
-```bash
-MAIL_HOST=smtp.gmail.com
-MAIL_PORT=587
-MAIL_SECURE=false
-MAIL_USERNAME=
-MAIL_PASSWORD=
-MAIL_FROM_ADDRESS=no-reply@gmail.com
-MAIL_FROM_NAME=
+```http
+PUT http://localhost:3456/api/auth/2fa-settings
+Content-Type: application/json
+Authorization: Bearer YOUR_ACCESS_TOKEN
+
+{
+  "enable2FA": true
+}
 ```
 
-3. Install package & setup
+## Các API Chính
 
-```bash
-npm i
+### 1. Đăng ký tài khoản
+
+```http
+POST http://localhost:3456/api/auth/register
+Content-Type: application/json
+
+{
+  "name": "User Name",
+  "email": "user@example.com",
+  "password": "StrongPassword123",
+  "enable2FA": false
+}
 ```
 
-4. Initialize data (Required for new database)
+### 2. Đăng nhập
 
-```bash
-npm run seed
+```http
+POST http://localhost:3456/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "StrongPassword123"
+}
 ```
 
-5. Runs the app
+### 3. Xác thực 2FA
 
-```bash
-npm start
+```http
+POST http://localhost:3456/api/auth/verify-2fa
+Content-Type: application/json
+
+{
+  "userId": "USER_ID_FROM_LOGIN_RESPONSE",
+  "twoFACode": "CODE_FROM_AUTHENTICATOR"
+}
 ```
 
-6. Builds the app for production to the `build` folder
+### 4. Làm mới token
 
-```bash
-npm run build
+```http
+POST http://localhost:3456/api/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "YOUR_REFRESH_TOKEN"
+}
 ```
 
-7. Runs the app on `production` mode
+### 5. Lưu mật khẩu
 
-```bash
-node build/main.js
+```http
+POST http://localhost:3456/api/passwords
+Content-Type: application/json
+Authorization: Bearer YOUR_ACCESS_TOKEN
+
+{
+  "website": "facebook.com",
+  "username": "user@example.com",
+  "encryptedData": "ENCRYPTED_DATA",
+  "iv": "IV_STRING"
+}
 ```
 
-##### Default account
+### 6. Lấy danh sách mật khẩu
 
-```yaml
-Email: admin@zent.vn
-Password: Zent@123.edu.vn
+```http
+GET http://localhost:3456/api/passwords
+Authorization: Bearer YOUR_ACCESS_TOKEN
 ```
 
-## Credits
+### 7. Cập nhật mật khẩu
 
-[Vũ Xuân Hoàng](https://gitlab.com/hoangvxzentvn).
+```http
+PUT http://localhost:3456/api/passwords/PASSWORD_ID
+Content-Type: application/json
+Authorization: Bearer YOUR_ACCESS_TOKEN
+
+{
+  "website": "facebook.com",
+  "username": "user@example.com",
+  "encryptedData": "NEW_ENCRYPTED_DATA",
+  "iv": "NEW_IV_STRING"
+}
+```
+
+Hoặc
+
+```http
+PUT http://localhost:3456/api/passwords
+Content-Type: application/json
+Authorization: Bearer YOUR_ACCESS_TOKEN
+
+{
+  "id": "PASSWORD_ID",
+  "website": "facebook.com",
+  "username": "user@example.com",
+  "encryptedData": "NEW_ENCRYPTED_DATA",
+  "iv": "NEW_IV_STRING"
+}
+```

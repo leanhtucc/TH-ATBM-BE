@@ -19,13 +19,9 @@ router.get('/:id', asyncHandler(passwordController.getPasswordById))
 // Create a new password
 router.post('/', validate(addPasswordSchema), asyncHandler(passwordController.savePassword))
 
-// Update a password (với id trong params)
-router.put('/:id', validate(updatePasswordSchema), asyncHandler(passwordController.updatePassword))
 // Update a password (với id trong body)
 router.put('/', validate(updatePasswordSchema), asyncHandler(passwordController.updatePassword))
 
-// Delete a password (với id trong params)
-router.delete('/:id', asyncHandler(passwordController.deletePassword))
 // Delete a password (với id trong body)
 router.delete('/', asyncHandler(passwordController.deletePassword))
 

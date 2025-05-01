@@ -32,10 +32,11 @@ export const getPasswordById = async (id, userId) => {
 // Save a new password
 export const savePassword = async (passwordData) => {
   try {
-    const { userId, username, encryptedData, iv } = passwordData
+    const { userId, website, username, encryptedData, iv } = passwordData
 
     const newPassword = new Password({
       userId: new ObjectId(userId),
+      website,
       username,
       encryptedData,
       iv
@@ -50,7 +51,7 @@ export const savePassword = async (passwordData) => {
 // Update an existing password
 export const updatePassword = async (id, userId, passwordData) => {
   try {
-    const { username, encryptedData, iv } = passwordData
+    const { website, username, encryptedData, iv } = passwordData
 
     const updatedPassword = await Password.findOneAndUpdate(
       {
@@ -58,6 +59,7 @@ export const updatePassword = async (id, userId, passwordData) => {
         userId: new ObjectId(userId)
       },
       {
+        ...(website && { website }),
         ...(username && { username }),
         ...(encryptedData && { encryptedData }),
         ...(iv && { iv })

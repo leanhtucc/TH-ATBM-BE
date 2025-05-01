@@ -10,8 +10,8 @@ const router = express.Router()
 // Public routes
 router.post('/register', validate(registerSchema), asyncHandler(authController.register))
 router.post('/login', validate(loginSchema), asyncHandler(authController.login))
-router.post('/verify-2fa', asyncHandler(authController.verify2FA))
 router.post('/refresh', validate(refreshTokenSchema), asyncHandler(authController.refresh))
+router.post('/verify-2fa', asyncHandler(authController.verify2FA))
 
 // Protected routes
 router.put('/2fa-settings', requireAuth, asyncHandler(authController.update2FASettings))

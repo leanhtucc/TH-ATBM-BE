@@ -8,6 +8,12 @@ const passwordSchema = {
     required: true,
     index: true
   },
+  website: {
+    type: String,
+    required: false, // Không bắt buộc
+    trim: true,
+    default: '' // Giá trị mặc định là chuỗi rỗng
+  },
   username: {
     type: String,
     required: true,

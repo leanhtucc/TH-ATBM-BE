@@ -27,9 +27,10 @@ export const getPasswordById = async (req, res, next) => {
 export const savePassword = async (req, res, next) => {
   try {
     const userId = req.currentUser._id
-    const { username, encryptedData, iv } = req.body
+    const { website, username, encryptedData, iv } = req.body
     const newPassword = await passwordService.savePassword({
       userId,
+      website,
       username,
       encryptedData,
       iv
@@ -51,8 +52,9 @@ export const updatePassword = async (req, res, next) => {
       return res.status(400).jsonify(null, 'ID mật khẩu là bắt buộc')
     }
 
-    const { username, encryptedData, iv } = req.body
+    const { website, username, encryptedData, iv } = req.body
     const updatedPassword = await passwordService.updatePassword(id, userId, {
+      website,
       username,
       encryptedData,
       iv
