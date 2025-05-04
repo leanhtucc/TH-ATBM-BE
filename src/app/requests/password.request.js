@@ -20,3 +20,10 @@ export const updatePasswordSchema = Joi.object({
   encryptedData: Joi.string().optional(),
   iv: Joi.string().optional()
 })
+
+export const deletePasswordSchema = Joi.object({
+  id: Joi.string().required().messages({
+    'any.required': 'ID mật khẩu là bắt buộc',
+    'string.empty': 'ID mật khẩu không được để trống'
+  })
+})

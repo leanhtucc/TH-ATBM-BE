@@ -31,6 +31,12 @@ const passwordSchema = {
 
 const Password = createModel('Password', 'passwords', passwordSchema, {
   toJSON: {
+    transform(doc, ret) {
+      ret.id = ret._id.toString()
+      delete ret._id
+      delete ret.userId // Loại bỏ userId khỏi kết quả JSON
+      return ret
+    },
     virtuals: true
   }
 })

@@ -1,6 +1,19 @@
 /* eslint-disable no-console */
 import mongoose from 'mongoose'
 
+// Cài đặt sự kiện cho kết nối MongoDB
+mongoose.connection.on('error', (err) => {
+  console.error('MongoDB connection error:', err)
+})
+
+mongoose.connection.on('disconnected', () => {
+  console.log('MongoDB disconnected, attempting to reconnect...')
+})
+
+mongoose.connection.on('reconnected', () => {
+  console.log('MongoDB reconnected successfully')
+})
+
 mongoose.set('toJSON', {
   virtuals: true,
   transform: (doc, ret) => {
@@ -19,20 +32,19 @@ const mongoDb = {
     }
 
     try {
-      // Thêm options để xử lý kết nối Atlas tốt hơn
+      // Thêm options được hỗ trợ trong phiên bản MongoDB mới
       await mongoose.connect(uri, {
-        autoCreate: true,
-        autoIndex: true,
-        connectTimeoutMS: 30000, // Tăng thời gian kết nối lên 30s
-        socketTimeoutMS: 45000, // Tăng socket timeout lên 45s
-        serverSelectionTimeoutMS: 30000, // Tăng server selection timeout
-        heartbeatFrequencyMS: 10000, // Tăng tần suất heartbeat
-        retryWrites: true, // Cho phép thử lại khi gặp lỗi ghi
-        retryReads: true, // Cho phép thử lại khi gặp lỗi đọc
-        maxPoolSize: 10, // Giới hạn số lượng kết nối đồng thời
-        minPoolSize: 1, // Duy trì ít nhất 1 kết nối
-        w: 'majority' // Đảm bảo ghi được xác nhận bởi đa số server
-        // Removed deprecated options: useNewUrlParser and useUnifiedTopology
+        serverSelectionTimeoutMS: 30000,
+        socketTimeoutMS: 75000,
+        connectTimeoutMS: 30000,
+        heartbeatFrequencyMS: 10000,
+        retryWrites: true,
+        retryReads: true,
+        maxPoolSize: 10,
+        minPoolSize: 1,
+        w: 'majority',
+        family: 4 // Ưu tiên IPv4
+        // Loại bỏ các option không được hỗ trợ: autoReconnect, reconnectTries, reconnectInterval
       })
       console.log('Connected to MongoDB Atlas successfully')
     } catch (error) {
@@ -52,6 +64,14 @@ const mongoDb = {
   },
   isDisconnected: () => {
     return mongoose.connection.readyState === 0
+  },
+  // Thêm hàm reconnect để sử dụng khi cần kết nối lại thủ công
+  reconnect: async () => {
+    if (mongoose.connection.readyState === 0) {
+      console.log('Attempting to reconnect to MongoDB...')
+      return mongoDb.connect()
+    }
+    return Promise.resolve()
   }
 }
 
