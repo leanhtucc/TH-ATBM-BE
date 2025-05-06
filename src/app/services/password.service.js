@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import Password from '../../models/client/passwords'
 import { ObjectId } from '../../models/base'
 

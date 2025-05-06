@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import * as passwordService from '../services/password.service'
 
 // Get all passwords for the current user
