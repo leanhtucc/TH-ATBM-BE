@@ -155,29 +155,3 @@ Authorization: Bearer YOUR_ACCESS_TOKEN
 
 ## env
 
-HOST=localhost
-PORT=3456
-
-APP_NAME=Express
-APP_URL_API=http://localhost:3456
-APP_URL_CLIENT=http://localhost:3000
-OTHER_URLS_CLIENT=
-SECRET_KEY=phongnk
-LOGIN_EXPIRE_IN=7d
-REQUESTS_LIMIT_PER_MINUTE=100
-
-DB_HOST=localhost
-DB_PORT=27017
-DB_USERNAME=
-DB_PASSWORD=
-DB_NAME=exchangeUdu
-DB_AUTH_SOURCE=admin
-MONGO_DB_CLOUD='mongodb+srv://leanhtu1123:t2MuwE5pCrZGwhPJ@cluster0.lnp58w3.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'
-
-MAIL_HOST=smtp.gmail.com
-MAIL_PORT=587
-MAIL_SECURE=false
-MAIL_USERNAME=khaphong.ptit@gmail.com
-MAIL_PASSWORD=123456
-MAIL_FROM_ADDRESS=no-reply@gmail.com
-MAIL_FROM_NAME=localhost
